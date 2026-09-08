@@ -24,7 +24,7 @@ function Footer() {
       </div>
       <div>
         <h3>Contact Us</h3>
-        <input type="text" placeholder='email here !!' />
+        <input type="text" placeholder='email here !!' className='form-control' />
       </div>
     </div>
   )
