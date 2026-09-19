@@ -1,12 +1,45 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
+import { decrementCart, emptyCart, incrementCart, removeCart } from '../redux/slices/cartSlice'
+import Swal from 'sweetalert2'
 
 function Cart() {
+  const userCart=useSelector(state=>state.cartReducer)
+  const dispatch=useDispatch()
+  const [cartTotal,setCartTotal]=useState(0)
+  const navigate =useNavigate()
+  
+  useEffect(()=>{
+    setCartTotal(userCart?.reduce((a,b)=>a+b.totalPrice,0))
+  },[userCart])
+
+  const hanldeDecrementQuantity=(product)=>{
+    if(product.quantity>1){
+      dispatch(decrementCart(product.id))
+    }else{
+      dispatch(removeCart(product.id))
+    }
+  }
+
+  const handleCheckOut=()=>{
+    dispatch(emptyCart())
+    Swal.fire({
+          title: "Order Placed Succesfully!!!",
+          text: "Thank You For The Purchase",
+          icon: "success",
+          confirmButtonText:"Shop More"
+        });
+        navigate('/')
+  }
+
   return (
     <>
       <Header/>
-      <div className="container my-5">
+      {
+        userCart?.length>0?
+        <div className="container my-5">
         <h1 className='text-primary my-5'>Cart Summary</h1>
         <div className='row mb-5'>
           <div className='col-md-8 border rounded p-5'>
@@ -22,41 +55,56 @@ function Cart() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td >1</td>
-                  <td >title</td>
-                  <td><img width={'70px'} height={'50px'} className='img-fluid' src="https://d2v5dzhdg4zhx3.cloudfront.net/web-assets/images/storypages/primary/ProductShowcasesampleimages/JPEG/Product+Showcase-1.jpg" alt='product image' /></td>
+                {
+                  userCart?.map((item,index)=>(
+                    <tr key={item?.id}>
+                  <td >{index+1}</td>
+                  <td >{item?.title}</td>
+                  <td><img width={'70px'} height={'50px'} className='img-fluid' src={item?.thumbnail} alt='product image' /></td>
                   <td>
                     <div className='d-flex'>
-                      <button className='btn fs-1'>-</button>
-                      <input style={{width:'50px'}} type="text"className='form-control'value={10} readOnly />
-                      <button className='btn fs-1'>+</button>
+                      <button onClick={()=>hanldeDecrementQuantity(item)} className='btn fs-1'>-</button>
+                      <input style={{width:'50px'}} type="text"className='form-control'value={item?.quantity} readOnly />
+                      <button onClick={()=>dispatch(incrementCart(item?.id))} className='btn fs-1'>+</button>
                     </div>
                   </td>
-                  <td>$30</td>
+                  <td>{item?.totalPrice}</td>
                   <td>
-                    <button className='btn text-danger fs-4'>X</button>
+                    <button onClick={()=>dispatch(removeCart(item?.id))} className='btn text-danger fs-4'>X</button>
                   </td>
                 </tr>
+                  ))
+                }
               </tbody>
             </table>
             <div className='float-end mt-3'>
-                <button className='btn btn-danger'>Empty Cart</button>
+                <button onClick={()=>dispatch(emptyCart())} className='btn btn-danger'>Empty Cart</button>
                 <Link to={'/'} className='btn btn-info ms-5'>Shop More</Link>
             </div>
           </div>
           <div className='col-md-4'>
             <div className="rounded p-5 shadow border">
-              <h3>Total <span>5</span> Items</h3>
-              <h3>Total Amount : <span className="text-danger">$99999</span></h3>
+              <h3>Total <span>{userCart?.length}</span> Items</h3>
+              <h3>Total Amount : <span className="text-danger">${cartTotal}</span></h3>
               <hr />
               <div className="d-grid">
-                <button className='btn btn-success'>CHECKOUT</button>
+                <button onClick={handleCheckOut} className='btn btn-success'>CHECKOUT</button>
               </div>
             </div>
           </div>
         </div>
       </div>
+      :
+      <div style={{height:'100vh'}} className='d-flex flex-column justify-content-center align-items-center'>
+        <img className='w-25' src="https://www.gospeedy.co.in/images/empty.gif" alt="wwishlist" />
+        <h1>Your Cart is empty</h1>
+        <Link to={'/'} className='btn btn-primary'>Add More</Link>
+      </div>
+      
+      }
+
+      
+
     </>
   )
 }
